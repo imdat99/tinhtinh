@@ -357,7 +357,7 @@ class MainActivity : AppCompatActivity() {
             holder.appCheckBox.setOnCheckedChangeListener(null)
             holder.appCheckBox.isChecked = app.isSelected
             holder.appCheckBox.setOnCheckedChangeListener { _, isChecked ->
-                val currentPosition = holder.bindingAdapterPosition
+                val currentPosition = holder.adapterPosition
                 if (currentPosition != RecyclerView.NO_POSITION) {
                     val currentApp = apps[currentPosition]
                     if (currentApp.isSelected != isChecked) {
@@ -395,7 +395,7 @@ class MainActivity : AppCompatActivity() {
             holder.headerKey.text = header.key
             holder.headerValue.text = header.value
             holder.buttonRemove.setOnClickListener {
-                val currentPosition = holder.bindingAdapterPosition
+                val currentPosition = holder.adapterPosition
                 if (currentPosition != RecyclerView.NO_POSITION) {
                     onRemove(currentPosition)
                 }
