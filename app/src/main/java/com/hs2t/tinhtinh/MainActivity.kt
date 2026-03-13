@@ -1,13 +1,20 @@
 package com.hs2t.tinhtinh
 
+import android.app.Dialog
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.PowerManager
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
@@ -26,7 +33,6 @@ import java.nio.charset.StandardCharsets
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var recyclerApps: RecyclerView
     private lateinit var recyclerHeaders: RecyclerView
     private lateinit var recyclerManualPackages: RecyclerView
     private lateinit var webhookUrlInput: TextInputEditText
@@ -37,6 +43,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var buttonAddPackage: Button
     private lateinit var buttonSave: Button
     private lateinit var buttonTestWebhook: Button
+    private lateinit var buttonSelectApps: Button
+    private lateinit var buttonOpenNotificationAccess: Button
+    private lateinit var buttonOpenBatterySettings: Button
+    private lateinit var selectedAppsSummary: TextView
+    private lateinit var setupWarning: TextView
+    private lateinit var notificationAccessStatus: TextView
+    private lateinit var batteryOptimizationStatus: TextView
     private lateinit var testResult: TextView
 
     private val allApps = mutableListOf<AppInfo>()
@@ -58,10 +71,15 @@ class MainActivity : AppCompatActivity() {
         loadSavedData()
         loadInstalledApps()
         setupClickListeners()
+        refreshSetupStatus()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        refreshSetupStatus()
     }
 
     private fun initViews() {
-        recyclerApps = findViewById(R.id.recyclerApps)
         recyclerHeaders = findViewById(R.id.recyclerHeaders)
         recyclerManualPackages = findViewById(R.id.recyclerManualPackages)
         webhookUrlInput = findViewById(R.id.webhookUrlInput)
@@ -72,6 +90,13 @@ class MainActivity : AppCompatActivity() {
         buttonAddPackage = findViewById(R.id.buttonAddPackage)
         buttonSave = findViewById(R.id.buttonSave)
         buttonTestWebhook = findViewById(R.id.buttonTestWebhook)
+        buttonSelectApps = findViewById(R.id.buttonSelectApps)
+        buttonOpenNotificationAccess = findViewById(R.id.buttonOpenNotificationAccess)
+        buttonOpenBatterySettings = findViewById(R.id.buttonOpenBatterySettings)
+        selectedAppsSummary = findViewById(R.id.selectedAppsSummary)
+        setupWarning = findViewById(R.id.setupWarning)
+        notificationAccessStatus = findViewById(R.id.notificationAccessStatus)
+        batteryOptimizationStatus = findViewById(R.id.batteryOptimizationStatus)
         testResult = findViewById(R.id.testResult)
 
         appsAdapter = AppsAdapter { packageName, isSelected ->
@@ -83,10 +108,8 @@ class MainActivity : AppCompatActivity() {
             }
             syncAppSelection(packageName, isSelected)
             manualPackagesAdapter.submitList(manualPackages.toList().sorted())
+            updateSelectedAppsSummary()
         }
-        recyclerApps.layoutManager = LinearLayoutManager(this)
-        recyclerApps.adapter = appsAdapter
-        recyclerApps.isNestedScrollingEnabled = false
 
         headersAdapter = HeadersAdapter { position ->
             if (position in headers.indices) {
@@ -103,6 +126,7 @@ class MainActivity : AppCompatActivity() {
                 manualPackages.remove(packageName)
                 manualPackagesAdapter.submitList(manualPackages.toList().sorted())
                 syncAppSelection(packageName, false)
+                updateSelectedAppsSummary()
             }
         )
         recyclerManualPackages.layoutManager = LinearLayoutManager(this)
@@ -173,6 +197,7 @@ class MainActivity : AppCompatActivity() {
         allApps.sortBy { it.name.lowercase() }
         appsAdapter.submitList(allApps.toList())
         manualPackagesAdapter.submitList(manualPackages.toList().sorted())
+        updateSelectedAppsSummary()
     }
 
     private fun syncAppSelection(packageName: String, isSelected: Boolean) {
@@ -183,7 +208,116 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun updateSelectedAppsSummary() {
+        val selectedNames = allApps
+            .filter { selectedApps.contains(it.packageName) }
+            .map { it.name }
+            .sorted()
+
+        val manualOnlyPackages = manualPackages
+            .filter { packageName -> allApps.none { it.packageName == packageName } }
+            .sorted()
+
+        val summaryItems = selectedNames + manualOnlyPackages
+        selectedAppsSummary.text = if (summaryItems.isEmpty()) {
+            "Chưa chọn ứng dụng nào"
+        } else {
+            "Đã chọn ${summaryItems.size} ứng dụng: ${summaryItems.joinToString(", ")}"
+        }
+    }
+
+    private fun isNotificationAccessEnabled(): Boolean {
+        val enabledListeners = Settings.Secure.getString(contentResolver, "enabled_notification_listeners") ?: return false
+        return enabledListeners.contains(ComponentName(this, NotificationListener::class.java).flattenToString())
+    }
+
+    private fun isIgnoringBatteryOptimizations(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return true
+        val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+        return powerManager.isIgnoringBatteryOptimizations(packageName)
+    }
+
+    private fun refreshSetupStatus() {
+        val hasNotificationAccess = isNotificationAccessEnabled()
+        val ignoresBatteryOptimization = isIgnoringBatteryOptimizations()
+
+        notificationAccessStatus.text = if (hasNotificationAccess) {
+            "Notification Access: Đã cấp quyền"
+        } else {
+            "Notification Access: Chưa cấp quyền. App sẽ không nhận được notification cho đến khi bạn bật quyền này."
+        }
+
+        batteryOptimizationStatus.text = if (ignoresBatteryOptimization) {
+            "Battery Optimization: Đã bỏ tối ưu pin hoặc thiết bị không yêu cầu"
+        } else {
+            "Battery Optimization: Đang bị tối ưu pin. Một số máy có thể chặn app chạy ngầm hoặc làm listener bị ngắt."
+        }
+
+        val warnings = mutableListOf<String>()
+        if (!hasNotificationAccess) {
+            warnings.add("- Chưa cấp Notification Access")
+        }
+        if (!ignoresBatteryOptimization) {
+            warnings.add("- Chưa tắt Battery Optimization cho app")
+        }
+
+        setupWarning.text = if (warnings.isEmpty()) {
+            "Thiết lập chạy ngầm cơ bản đã đủ. Nếu dùng ROM như Xiaomi/Oppo/Vivo, vẫn nên bật thêm Auto Start thủ công."
+        } else {
+            "Cần hoàn tất các mục sau để app chạy ngầm ổn định:\n${warnings.joinToString("\n")}"
+        }
+    }
+
+    private fun openNotificationAccessSettings() {
+        startActivity(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"))
+    }
+
+    private fun openBatteryOptimizationSettings() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                .setData(Uri.parse("package:$packageName"))
+            startActivity(intent)
+        } else {
+            startActivity(Intent(Settings.ACTION_SETTINGS))
+        }
+    }
+
+    private fun showAppsDialog() {
+        val dialog = Dialog(this)
+        dialog.setContentView(R.layout.dialog_select_apps)
+        dialog.window?.setLayout(
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.MATCH_PARENT
+        )
+
+        val recyclerAppsDialog: RecyclerView = dialog.findViewById(R.id.recyclerAppsDialog)
+        val buttonCloseAppsDialog: Button = dialog.findViewById(R.id.buttonCloseAppsDialog)
+
+        recyclerAppsDialog.layoutManager = LinearLayoutManager(this)
+        recyclerAppsDialog.adapter = appsAdapter
+        recyclerAppsDialog.isNestedScrollingEnabled = true
+        appsAdapter.submitList(allApps.toList())
+
+        buttonCloseAppsDialog.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
+
     private fun setupClickListeners() {
+        buttonSelectApps.setOnClickListener {
+            showAppsDialog()
+        }
+
+        buttonOpenNotificationAccess.setOnClickListener {
+            openNotificationAccessSettings()
+        }
+
+        buttonOpenBatterySettings.setOnClickListener {
+            openBatteryOptimizationSettings()
+        }
+
         buttonAddHeader.setOnClickListener {
             val key = headerKeyInput.text?.toString()?.trim()
             val value = headerValueInput.text?.toString()?.trim()
@@ -204,6 +338,7 @@ class MainActivity : AppCompatActivity() {
                     manualPackagesAdapter.submitList(manualPackages.toList().sorted())
                     manualPackageInput.setText("")
                     syncAppSelection(packageName, true)
+                    updateSelectedAppsSummary()
                 } else {
                     Toast.makeText(this, "Package name không hợp lệ hoặc đã tồn tại", Toast.LENGTH_SHORT).show()
                 }

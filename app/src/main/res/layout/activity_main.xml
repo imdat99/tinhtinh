@@ -39,6 +39,67 @@
             app:layout_constraintTop_toBottomOf="@id/screenTitle" />
 
         <TextView
+            android:id="@+id/setupWarning"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/bg_recycler"
+            android:padding="12dp"
+            android:textColor="#B91C1C"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/screenSubtitle" />
+
+        <TextView
+            android:id="@+id/notificationAccessStatus"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_recycler"
+            android:padding="12dp"
+            android:textColor="#111827"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/setupWarning" />
+
+        <Button
+            android:id="@+id/buttonOpenNotificationAccess"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Mở Notification Access"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/notificationAccessStatus" />
+
+        <TextView
+            android:id="@+id/batteryOptimizationStatus"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_recycler"
+            android:padding="12dp"
+            android:textColor="#111827"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/buttonOpenNotificationAccess" />
+
+        <Button
+            android:id="@+id/buttonOpenBatterySettings"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Mở Battery Optimization"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/batteryOptimizationStatus" />
+
+        <TextView
             android:id="@+id/titleApps"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -48,32 +109,44 @@
             android:textSize="18sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/screenSubtitle" />
+            app:layout_constraintTop_toBottomOf="@id/buttonOpenBatterySettings" />
 
         <TextView
             android:id="@+id/appsHint"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="Tick để nhận notification từ nhiều ứng dụng."
+            android:text="Chọn ứng dụng bằng cửa sổ riêng để tránh lỗi scroll và dễ thao tác hơn."
             android:textColor="#6B7280"
             android:textSize="13sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/titleApps" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recyclerApps"
+        <Button
+            android:id="@+id/buttonSelectApps"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:text="Mở danh sách ứng dụng"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/appsHint" />
+
+        <TextView
+            android:id="@+id/selectedAppsSummary"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:background="@drawable/bg_recycler"
-            android:clipToPadding="false"
-            android:nestedScrollingEnabled="false"
-            android:padding="6dp"
+            android:padding="12dp"
+            android:text="Chưa chọn ứng dụng nào"
+            android:textColor="#374151"
+            android:textSize="14sp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/appsHint" />
+            app:layout_constraintTop_toBottomOf="@id/buttonSelectApps" />
 
         <TextView
             android:id="@+id/titleManualPackages"
@@ -85,7 +158,7 @@
             android:textSize="18sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/recyclerApps" />
+            app:layout_constraintTop_toBottomOf="@id/selectedAppsSummary" />
 
         <TextView
             android:id="@+id/manualHint"

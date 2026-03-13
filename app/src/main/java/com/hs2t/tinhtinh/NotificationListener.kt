@@ -40,13 +40,20 @@ class NotificationListener : NotificationListenerService() {
         }
 
         val extras = sbn.notification.extras
-        val title = extras.getString("android.title") ?: ""
-        val text = extras.getString("android.text") ?: ""
+        val title = extras.getCharSequence("android.title")?.toString().orEmpty()
+        val text = extras.getCharSequence("android.text")?.toString()
+            ?: extras.getCharSequence("android.bigText")?.toString()
+            ?: extras.getCharSequence("android.subText")?.toString()
+            .orEmpty()
+
+        if (title.isBlank() && text.isBlank()) {
+            Log.d("NotificationListener", "Notification content is empty, ignoring")
+            return
+        }
 
         Log.d("NotificationListener", "Title: $title")
         Log.d("NotificationListener", "Text: $text")
 
-        // Send webhook
         sendWebhook(packageName, title, text)
     }
 
