@@ -8,13 +8,13 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.button.MaterialButton
 import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.textfield.TextInputEditText
 import org.json.JSONArray
@@ -33,10 +33,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var headerKeyInput: TextInputEditText
     private lateinit var headerValueInput: TextInputEditText
     private lateinit var manualPackageInput: TextInputEditText
-    private lateinit var buttonAddHeader: MaterialButton
-    private lateinit var buttonAddPackage: MaterialButton
-    private lateinit var buttonSave: MaterialButton
-    private lateinit var buttonTestWebhook: MaterialButton
+    private lateinit var buttonAddHeader: Button
+    private lateinit var buttonAddPackage: Button
+    private lateinit var buttonSave: Button
+    private lateinit var buttonTestWebhook: Button
     private lateinit var testResult: TextView
 
     private val allApps = mutableListOf<AppInfo>()
@@ -81,20 +81,18 @@ class MainActivity : AppCompatActivity() {
             } else {
                 selectedApps.remove(packageName)
             }
-            // Update UI state in data list
-            val appIndex = allApps.indexOfFirst { it.packageName == packageName }
-            if (appIndex >= 0) {
-                allApps[appIndex] = allApps[appIndex].copy(isSelected = isSelected)
-                appsAdapter.notifyItemChanged(appIndex)
-            }
-            manualPackagesAdapter.notifyDataSetChanged()
+            syncAppSelection(packageName, isSelected)
+            manualPackagesAdapter.submitList(manualPackages.toList().sorted())
         }
         recyclerApps.layoutManager = LinearLayoutManager(this)
         recyclerApps.adapter = appsAdapter
+        recyclerApps.isNestedScrollingEnabled = false
 
         headersAdapter = HeadersAdapter { position ->
-            headers.removeAt(position)
-            headersAdapter.notifyItemRemoved(position)
+            if (position in headers.indices) {
+                headers.removeAt(position)
+                headersAdapter.notifyItemRemoved(position)
+            }
         }
         recyclerHeaders.layoutManager = LinearLayoutManager(this)
         recyclerHeaders.adapter = headersAdapter
@@ -103,13 +101,8 @@ class MainActivity : AppCompatActivity() {
         manualPackagesAdapter = ManualPackagesAdapter(
             onDelete = { packageName ->
                 manualPackages.remove(packageName)
-                manualPackagesAdapter.notifyDataSetChanged()
-                // Update apps list if needed
-                val appIndex = allApps.indexOfFirst { it.packageName == packageName }
-                if (appIndex >= 0) {
-                    allApps[appIndex] = allApps[appIndex].copy(isSelected = false)
-                    appsAdapter.notifyItemChanged(appIndex)
-                }
+                manualPackagesAdapter.submitList(manualPackages.toList().sorted())
+                syncAppSelection(packageName, false)
             }
         )
         recyclerManualPackages.layoutManager = LinearLayoutManager(this)
@@ -151,6 +144,7 @@ class MainActivity : AppCompatActivity() {
                 headers.add(HeaderInfo(obj.getString("key"), obj.getString("value")))
             }
         }
+        headersAdapter.notifyDataSetChanged()
     }
 
     private fun loadInstalledApps() {
@@ -159,24 +153,34 @@ class MainActivity : AppCompatActivity() {
         intent.addCategory(Intent.CATEGORY_LAUNCHER)
         val apps = packageManager.queryIntentActivities(intent, PackageManager.MATCH_ALL)
 
+        allApps.clear()
         apps.forEach { resolveInfo ->
             val packageName = resolveInfo.activityInfo.packageName
-            // Skip this app itself
-            if (packageName != this.packageName) {
+            if (packageName != this.packageName && allApps.none { it.packageName == packageName }) {
                 val appName = resolveInfo.loadLabel(packageManager).toString()
                 val appIcon = resolveInfo.loadIcon(packageManager)
-                allApps.add(AppInfo(packageName, appName, appIcon))
+                allApps.add(
+                    AppInfo(
+                        packageName = packageName,
+                        name = appName,
+                        icon = appIcon,
+                        isSelected = selectedApps.contains(packageName) || manualPackages.contains(packageName)
+                    )
+                )
             }
         }
 
-        // Sort by name
         allApps.sortBy { it.name.lowercase() }
+        appsAdapter.submitList(allApps.toList())
+        manualPackagesAdapter.submitList(manualPackages.toList().sorted())
+    }
 
-        // Update adapter with selected state
-        appsAdapter.submitList(allApps.map {
-            it.copy(isSelected = selectedApps.contains(it.packageName) || manualPackages.contains(it.packageName))
-        })
-        manualPackagesAdapter.submitList(manualPackages.toList())
+    private fun syncAppSelection(packageName: String, isSelected: Boolean) {
+        val appIndex = allApps.indexOfFirst { it.packageName == packageName }
+        if (appIndex >= 0) {
+            allApps[appIndex] = allApps[appIndex].copy(isSelected = isSelected)
+            appsAdapter.submitList(allApps.toList())
+        }
     }
 
     private fun setupClickListeners() {
@@ -195,18 +199,11 @@ class MainActivity : AppCompatActivity() {
         buttonAddPackage.setOnClickListener {
             val packageName = manualPackageInput.text?.toString()?.trim()
             if (!packageName.isNullOrBlank()) {
-                // Validate package name format
-                if (packageName.contains(".") && !selectedApps.contains(packageName)) {
+                if (packageName.contains(".") && !selectedApps.contains(packageName) && !manualPackages.contains(packageName)) {
                     manualPackages.add(packageName)
-                    manualPackagesAdapter.notifyItemInserted(manualPackages.size - 1)
+                    manualPackagesAdapter.submitList(manualPackages.toList().sorted())
                     manualPackageInput.setText("")
-
-                    // Update apps list if this package exists
-                    val appIndex = allApps.indexOfFirst { it.packageName == packageName }
-                    if (appIndex >= 0) {
-                        allApps[appIndex] = allApps[appIndex].copy(isSelected = true)
-                        appsAdapter.notifyItemChanged(appIndex)
-                    }
+                    syncAppSelection(packageName, true)
                 } else {
                     Toast.makeText(this, "Package name không hợp lệ hoặc đã tồn tại", Toast.LENGTH_SHORT).show()
                 }
@@ -357,14 +354,20 @@ class MainActivity : AppCompatActivity() {
             holder.appName.text = app.name
             holder.appPackage.text = app.packageName
 
-            // Use tag to prevent recursive calls
-            holder.appCheckBox.tag = position
+            holder.appCheckBox.setOnCheckedChangeListener(null)
             holder.appCheckBox.isChecked = app.isSelected
-            holder.appCheckBox.setOnCheckedChangeListener { buttonView, isChecked ->
-                val currentPosition = buttonView.tag as? Int ?: return@setOnCheckedChangeListener
-                if (currentPosition == position) {
-                    onCheckedChanged(app.packageName, isChecked)
+            holder.appCheckBox.setOnCheckedChangeListener { _, isChecked ->
+                val currentPosition = holder.bindingAdapterPosition
+                if (currentPosition != RecyclerView.NO_POSITION) {
+                    val currentApp = apps[currentPosition]
+                    if (currentApp.isSelected != isChecked) {
+                        onCheckedChanged(currentApp.packageName, isChecked)
+                    }
                 }
+            }
+
+            holder.itemView.setOnClickListener {
+                holder.appCheckBox.toggle()
             }
         }
 
@@ -392,7 +395,10 @@ class MainActivity : AppCompatActivity() {
             holder.headerKey.text = header.key
             holder.headerValue.text = header.value
             holder.buttonRemove.setOnClickListener {
-                onRemove(position)
+                val currentPosition = holder.bindingAdapterPosition
+                if (currentPosition != RecyclerView.NO_POSITION) {
+                    onRemove(currentPosition)
+                }
             }
         }
 

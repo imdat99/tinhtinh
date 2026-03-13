@@ -5,6 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#F6F7FB"
     android:fillViewport="true"
     tools:context=".MainActivity">
 
@@ -14,35 +15,89 @@
         android:padding="16dp">
 
         <TextView
+            android:id="@+id/screenTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="Thiết lập nhận thông báo"
+            android:textColor="#111827"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/screenSubtitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Chọn app cần theo dõi, thêm package thủ công nếu cần, rồi cấu hình webhook để nhận dữ liệu."
+            android:textColor="#6B7280"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/screenTitle" />
+
+        <TextView
             android:id="@+id/titleApps"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
             android:text="1. Chọn ứng dụng theo dõi"
-            android:textSize="16sp"
+            android:textColor="#111827"
+            android:textSize="18sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toBottomOf="@id/screenSubtitle" />
+
+        <TextView
+            android:id="@+id/appsHint"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Tick để nhận notification từ nhiều ứng dụng."
+            android:textColor="#6B7280"
+            android:textSize="13sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/titleApps" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerApps"
             android:layout_width="0dp"
-            android:layout_height="400dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:background="@drawable/bg_recycler"
+            android:clipToPadding="false"
+            android:nestedScrollingEnabled="false"
+            android:padding="6dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/titleApps" />
+            app:layout_constraintTop_toBottomOf="@id/appsHint" />
 
         <TextView
             android:id="@+id/titleManualPackages"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="20dp"
             android:text="2. Nhập thủ công package names"
-            android:textSize="16sp"
+            android:textColor="#111827"
+            android:textSize="18sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/recyclerApps" />
+
+        <TextView
+            android:id="@+id/manualHint"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Dùng khi app không xuất hiện trong danh sách. Ví dụ: com.mbmobile"
+            android:textColor="#6B7280"
+            android:textSize="13sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/titleManualPackages" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/manualPackageLayout"
@@ -52,7 +107,7 @@
             android:hint="Ví dụ: com.mbmobile, com.vnpay"
             app:layout_constraintEnd_toStartOf="@id/buttonAddPackage"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/titleManualPackages">
+            app:layout_constraintTop_toBottomOf="@id/manualHint">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/manualPackageInput"
@@ -67,16 +122,20 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
+            android:minWidth="88dp"
             android:text="Thêm"
+            app:layout_constraintBottom_toBottomOf="@id/manualPackageLayout"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@id/manualPackageLayout" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerManualPackages"
             android:layout_width="0dp"
-            android:layout_height="150dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:background="@drawable/bg_recycler"
+            android:nestedScrollingEnabled="false"
+            android:padding="6dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/manualPackageLayout" />
@@ -85,12 +144,25 @@
             android:id="@+id/titleWebhook"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="20dp"
             android:text="3. Cấu hình Webhook"
-            android:textSize="16sp"
+            android:textColor="#111827"
+            android:textSize="18sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/recyclerManualPackages" />
+
+        <TextView
+            android:id="@+id/webhookHint"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="Notification sẽ được gửi đến URL này dưới dạng JSON POST."
+            android:textColor="#6B7280"
+            android:textSize="13sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/titleWebhook" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/webhookUrlLayout"
@@ -100,7 +172,7 @@
             android:hint="Webhook URL"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/titleWebhook">
+            app:layout_constraintTop_toBottomOf="@id/webhookHint">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/webhookUrlInput"
@@ -113,9 +185,10 @@
             android:id="@+id/titleHeaders"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="20dp"
             android:text="4. Headers (tùy chọn)"
-            android:textSize="16sp"
+            android:textColor="#111827"
+            android:textSize="18sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/webhookUrlLayout" />
@@ -167,9 +240,11 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerHeaders"
             android:layout_width="0dp"
-            android:layout_height="120dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:background="@drawable/bg_recycler"
+            android:nestedScrollingEnabled="false"
+            android:padding="6dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/buttonAddHeader" />
@@ -178,9 +253,10 @@
             android:id="@+id/titleTest"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="20dp"
             android:text="5. Test Webhook"
-            android:textSize="16sp"
+            android:textColor="#111827"
+            android:textSize="18sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/recyclerHeaders" />
@@ -201,6 +277,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
+            android:background="@drawable/bg_recycler"
+            android:padding="12dp"
             android:textSize="14sp"
             android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
@@ -209,11 +287,12 @@
 
         <Button
             android:id="@+id/buttonSave"
+            style="@style/Widget.Material3.Button"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:layout_marginBottom="16dp"
-            android:text="LƯU CẤU HÌNH"
+            android:text="Lưu cấu hình"
             android:textSize="16sp"
             android:textStyle="bold"
             app:layout_constraintBottom_toBottomOf="parent"
