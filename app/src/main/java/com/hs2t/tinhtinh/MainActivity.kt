@@ -112,7 +112,7 @@ class MainActivity : AppCompatActivity() {
         apps.forEach { resolveInfo ->
             val packageName = resolveInfo.activityInfo.packageName
             // Skip this app itself
-            if (packageName != packageName) {
+            if (packageName != this.packageName) {
                 val appName = resolveInfo.loadLabel(packageManager).toString()
                 val appIcon = resolveInfo.loadIcon(packageManager)
                 allApps.add(AppInfo(packageName, appName, appIcon))
@@ -184,10 +184,11 @@ class MainActivity : AppCompatActivity() {
         private val onCheckedChanged: (String, Boolean) -> Unit
     ) : RecyclerView.Adapter<AppsAdapter.AppViewHolder>() {
 
-        private var apps: List<AppInfo> = emptyList()
+        private val apps = mutableListOf<AppInfo>()
 
         fun submitList(newApps: List<AppInfo>) {
-            apps = newApps
+            apps.clear()
+            apps.addAll(newApps)
             notifyDataSetChanged()
         }
 
@@ -212,6 +213,9 @@ class MainActivity : AppCompatActivity() {
             holder.appCheckBox.isChecked = app.isSelected
             holder.appCheckBox.setOnCheckedChangeListener { _, isChecked ->
                 onCheckedChanged(app.packageName, isChecked)
+                // Update UI state
+                apps[position] = app.copy(isSelected = isChecked)
+                notifyItemChanged(position)
             }
         }
 

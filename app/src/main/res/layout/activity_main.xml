@@ -22,10 +22,9 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerApps"
         android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
-        app:layout_constraintBottom_toTopOf="@id/webhookUrlInput"
+        android:layout_marginBottom="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/titleApps"
@@ -37,11 +36,10 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
         android:hint="Webhook URL"
-        app:layout_constraintBottom_toTopOf="@id/titleHeaders"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/recyclerApps">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/webhookUrlInput"
@@ -57,15 +55,16 @@
         android:text="Headers"
         android:textSize="18sp"
         android:textStyle="bold"
+        android:layout_marginTop="16dp"
         android:layout_marginStart="16dp"
-        android:layout_marginBottom="8dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/headerKeyInput" />
+        app:layout_constraintTop_toBottomOf="@id/webhookUrlLayout" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/headerKeyLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="8dp"
         android:hint="Key"
@@ -84,6 +83,7 @@
         android:id="@+id/headerValueLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
         android:hint="Value"
@@ -100,8 +100,10 @@
 
     <Button
         android:id="@+id/buttonAddHeader"
+        style="@style/Widget.Material3.Button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="16dp"
         android:text="Thêm"
         app:layout_constraintEnd_toEndOf="parent"
@@ -110,13 +112,12 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerHeaders"
         android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
-        app:layout_constraintBottom_toTopOf="@id/buttonSave"
+        android:layout_marginBottom="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/headerValueLayout"
+        app:layout_constraintTop_toBottomOf="@id/headerKeyLayout"
         app:layout_constraintHeight_max="150dp" />
 
     <Button
