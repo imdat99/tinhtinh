@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(./gradlew assembleDebug --no-daemon)"
+    ]
+  }
+}

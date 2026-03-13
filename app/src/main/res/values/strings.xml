@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Tinh tinh</string>
+    <string name="select_apps">Chọn ứng dụng theo dõi</string>
+    <string name="webhook_url">Webhook URL</string>
+    <string name="headers">Headers</string>
+    <string name="header_key">Key</string>
+    <string name="header_value">Value</string>
+    <string name="add">Thêm</string>
+    <string name="save_config">Lưu cấu hình</string>
+    <string name="saved">Đã lưu!</string>
+    <string name="enter_webhook_url">Nhập URL webhook</string>
+</resources>
