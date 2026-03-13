@@ -32,8 +32,8 @@ class NotificationListener : NotificationListenerService() {
         val packageName = sbn.packageName
         Log.d("NotificationListener", "Notification from: $packageName")
 
-        // Check if this app is in the selected list
-        val selectedApps = getSelectedApps()
+        // Check if this app is in the selected list or manual packages
+        val selectedApps = getAllSelectedApps()
         if (!selectedApps.contains(packageName)) {
             Log.d("NotificationListener", "App not selected, ignoring")
             return
@@ -50,17 +50,36 @@ class NotificationListener : NotificationListenerService() {
         sendWebhook(packageName, title, text)
     }
 
-    private fun getSelectedApps(): Set<String> {
-        val selectedJson = prefs.getString("selected_apps", null) ?: return emptySet()
+    private fun getAllSelectedApps(): Set<String> {
         val result = mutableSetOf<String>()
-        try {
-            val jsonArray = JSONArray(selectedJson)
-            for (i in 0 until jsonArray.length()) {
-                result.add(jsonArray.getString(i))
+
+        // Get selected apps from UI
+        val selectedJson = prefs.getString("selected_apps", null)
+        selectedJson?.let {
+            try {
+                val jsonArray = JSONArray(it)
+                for (i in 0 until jsonArray.length()) {
+                    result.add(jsonArray.getString(i))
+                }
+            } catch (e: Exception) {
+                Log.e("NotificationListener", "Error parsing selected apps", e)
             }
-        } catch (e: Exception) {
-            Log.e("NotificationListener", "Error parsing selected apps", e)
         }
+
+        // Get manual packages
+        val manualJson = prefs.getString("manual_packages", null)
+        manualJson?.let {
+            try {
+                val jsonArray = JSONArray(it)
+                for (i in 0 until jsonArray.length()) {
+                    result.add(jsonArray.getString(i))
+                }
+            } catch (e: Exception) {
+                Log.e("NotificationListener", "Error parsing manual packages", e)
+            }
+        }
+
+        Log.d("NotificationListener", "Selected apps: $result")
         return result
     }
 
