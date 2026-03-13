@@ -23,19 +23,28 @@ class NotificationListener : NotificationListenerService() {
         getSharedPreferences("app_prefs", Context.MODE_PRIVATE)
     }
 
+    private val debugEnabled: Boolean
+        get() = prefs.getBoolean("debug_enabled", false)
+
     override fun onCreate() {
         super.onCreate()
         Log.d("NotificationListener", "Service created")
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
+        if (debugEnabled) {
+            Log.d("NotificationListener", "=== Notification received ===")
+            Log.d("NotificationListener", "Package: ${sbn.packageName}")
+        }
+
         val packageName = sbn.packageName
-        Log.d("NotificationListener", "Notification from: $packageName")
 
         // Check if this app is in the selected list or manual packages
         val selectedApps = getAllSelectedApps()
         if (!selectedApps.contains(packageName)) {
-            Log.d("NotificationListener", "App not selected, ignoring")
+            if (debugEnabled) {
+                Log.d("NotificationListener", "App not selected, ignoring")
+            }
             return
         }
 
@@ -47,14 +56,20 @@ class NotificationListener : NotificationListenerService() {
             .orEmpty()
 
         if (title.isBlank() && text.isBlank()) {
-            Log.d("NotificationListener", "Notification content is empty, ignoring")
+            if (debugEnabled) {
+                Log.d("NotificationListener", "Notification content is empty, ignoring")
+            }
             return
         }
 
-        Log.d("NotificationListener", "Title: $title")
-        Log.d("NotificationListener", "Text: $text")
+        if (debugEnabled) {
+            Log.d("NotificationListener", "Title: $title")
+            Log.d("NotificationListener", "Text: $text")
+        }
 
-        sendWebhook(packageName, title, text)
+        Thread {
+            sendWebhook(packageName, title, text)
+        }.start()
     }
 
     private fun getAllSelectedApps(): Set<String> {
@@ -86,14 +101,18 @@ class NotificationListener : NotificationListenerService() {
             }
         }
 
-        Log.d("NotificationListener", "Selected apps: $result")
+        if (debugEnabled) {
+            Log.d("NotificationListener", "Selected apps: $result")
+        }
         return result
     }
 
     private fun sendWebhook(packageName: String, title: String, text: String) {
         val webhookUrl = prefs.getString("webhook_url", "") ?: ""
         if (webhookUrl.isBlank()) {
-            Log.d("NotificationListener", "Webhook URL not set")
+            if (debugEnabled) {
+                Log.d("NotificationListener", "Webhook URL not set")
+            }
             return
         }
 
@@ -118,7 +137,9 @@ class NotificationListener : NotificationListenerService() {
                             val key = headerObj.getString("key")
                             val value = headerObj.getString("value")
                             connection.setRequestProperty(key, value)
-                            Log.d("NotificationListener", "Added header: $key")
+                            if (debugEnabled) {
+                                Log.d("NotificationListener", "Added header: $key")
+                            }
                         }
                     } catch (e: Exception) {
                         Log.e("NotificationListener", "Error parsing headers", e)
@@ -139,10 +160,14 @@ class NotificationListener : NotificationListenerService() {
                 outputStream.close()
 
                 val responseCode = connection.responseCode
-                Log.d("NotificationListener", "Webhook response: $responseCode")
+                if (debugEnabled) {
+                    Log.d("NotificationListener", "Webhook response: $responseCode")
+                }
 
                 if (responseCode == HttpURLConnection.HTTP_OK || responseCode == HttpURLConnection.HTTP_CREATED) {
-                    Log.d("NotificationListener", "Webhook sent successfully")
+                    if (debugEnabled) {
+                        Log.d("NotificationListener", "Webhook sent successfully")
+                    }
                 } else {
                     Log.e("NotificationListener", "Webhook failed with response code: $responseCode")
                 }

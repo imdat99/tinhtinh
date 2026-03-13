@@ -51,6 +51,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var notificationAccessStatus: TextView
     private lateinit var batteryOptimizationStatus: TextView
     private lateinit var testResult: TextView
+    private lateinit var checkboxDebug: MaterialCheckBox
 
     private val allApps = mutableListOf<AppInfo>()
     private val selectedApps = mutableSetOf<String>()
@@ -98,6 +99,7 @@ class MainActivity : AppCompatActivity() {
         notificationAccessStatus = findViewById(R.id.notificationAccessStatus)
         batteryOptimizationStatus = findViewById(R.id.batteryOptimizationStatus)
         testResult = findViewById(R.id.testResult)
+        checkboxDebug = findViewById(R.id.checkboxDebug)
 
         appsAdapter = AppsAdapter { packageName, isSelected ->
             if (isSelected) {
@@ -109,6 +111,7 @@ class MainActivity : AppCompatActivity() {
             syncAppSelection(packageName, isSelected)
             manualPackagesAdapter.submitList(manualPackages.toList().sorted())
             updateSelectedAppsSummary()
+            saveConfiguration(showToast = false)
         }
 
         headersAdapter = HeadersAdapter { position ->
@@ -127,6 +130,7 @@ class MainActivity : AppCompatActivity() {
                 manualPackagesAdapter.submitList(manualPackages.toList().sorted())
                 syncAppSelection(packageName, false)
                 updateSelectedAppsSummary()
+                saveConfiguration(showToast = false)
             }
         )
         recyclerManualPackages.layoutManager = LinearLayoutManager(this)
@@ -169,6 +173,10 @@ class MainActivity : AppCompatActivity() {
             }
         }
         headersAdapter.notifyDataSetChanged()
+
+        // Load debug enabled
+        val debugEnabled = prefs.getBoolean("debug_enabled", false)
+        checkboxDebug.isChecked = debugEnabled
     }
 
     private fun loadInstalledApps() {
@@ -327,6 +335,7 @@ class MainActivity : AppCompatActivity() {
                 headersAdapter.notifyItemInserted(headers.size - 1)
                 headerKeyInput.setText("")
                 headerValueInput.setText("")
+                saveConfiguration(showToast = false)
             }
         }
 
@@ -339,6 +348,7 @@ class MainActivity : AppCompatActivity() {
                     manualPackageInput.setText("")
                     syncAppSelection(packageName, true)
                     updateSelectedAppsSummary()
+                    saveConfiguration(showToast = false)
                 } else {
                     Toast.makeText(this, "Package name không hợp lệ hoặc đã tồn tại", Toast.LENGTH_SHORT).show()
                 }
@@ -350,27 +360,24 @@ class MainActivity : AppCompatActivity() {
         }
 
         buttonTestWebhook.setOnClickListener {
+            saveConfiguration(showToast = false)
             testWebhook()
+        }
+
+        checkboxDebug.setOnCheckedChangeListener { _, isChecked ->
+            prefs.edit().putBoolean("debug_enabled", isChecked).apply()
         }
     }
 
-    private fun saveConfiguration() {
+    private fun saveConfiguration(showToast: Boolean = true) {
         val webhookUrl = webhookUrlInput.text?.toString()?.trim()
 
-        // Save selected apps
         val selectedJson = JSONArray()
         selectedApps.forEach { selectedJson.put(it) }
-        prefs.edit().putString("selected_apps", selectedJson.toString()).apply()
 
-        // Save manual packages
         val manualJson = JSONArray()
         manualPackages.forEach { manualJson.put(it) }
-        prefs.edit().putString("manual_packages", manualJson.toString()).apply()
 
-        // Save webhook URL
-        prefs.edit().putString("webhook_url", webhookUrl ?: "").apply()
-
-        // Save headers
         val headersJson = JSONArray()
         headers.forEach {
             val obj = JSONObject()
@@ -378,9 +385,18 @@ class MainActivity : AppCompatActivity() {
             obj.put("value", it.value)
             headersJson.put(obj)
         }
-        prefs.edit().putString("headers", headersJson.toString()).apply()
 
-        Toast.makeText(this, getString(R.string.saved), Toast.LENGTH_SHORT).show()
+        prefs.edit()
+            .putString("selected_apps", selectedJson.toString())
+            .putString("manual_packages", manualJson.toString())
+            .putString("webhook_url", webhookUrl ?: "")
+            .putString("headers", headersJson.toString())
+            .putBoolean("debug_enabled", checkboxDebug.isChecked)
+            .apply()
+
+        if (showToast) {
+            Toast.makeText(this, getString(R.string.saved), Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun testWebhook() {
