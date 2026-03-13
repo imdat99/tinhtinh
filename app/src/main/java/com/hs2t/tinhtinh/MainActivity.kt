@@ -81,12 +81,16 @@ class MainActivity : AppCompatActivity() {
             } else {
                 selectedApps.remove(packageName)
             }
-            appsAdapter.notifyDataSetChanged()
+            // Update UI state in data list
+            val appIndex = allApps.indexOfFirst { it.packageName == packageName }
+            if (appIndex >= 0) {
+                allApps[appIndex] = allApps[appIndex].copy(isSelected = isSelected)
+                appsAdapter.notifyItemChanged(appIndex)
+            }
             manualPackagesAdapter.notifyDataSetChanged()
         }
         recyclerApps.layoutManager = LinearLayoutManager(this)
         recyclerApps.adapter = appsAdapter
-        recyclerApps.isNestedScrollingEnabled = false
 
         headersAdapter = HeadersAdapter { position ->
             headers.removeAt(position)
@@ -352,9 +356,15 @@ class MainActivity : AppCompatActivity() {
             holder.appIcon.setImageDrawable(app.icon)
             holder.appName.text = app.name
             holder.appPackage.text = app.packageName
+
+            // Use tag to prevent recursive calls
+            holder.appCheckBox.tag = position
             holder.appCheckBox.isChecked = app.isSelected
-            holder.appCheckBox.setOnCheckedChangeListener { _, isChecked ->
-                onCheckedChanged(app.packageName, isChecked)
+            holder.appCheckBox.setOnCheckedChangeListener { buttonView, isChecked ->
+                val currentPosition = buttonView.tag as? Int ?: return@setOnCheckedChangeListener
+                if (currentPosition == position) {
+                    onCheckedChanged(app.packageName, isChecked)
+                }
             }
         }
 
